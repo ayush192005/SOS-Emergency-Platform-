@@ -33,7 +33,6 @@ const App = () => {
           {!isNotFound && <MobileNav />}
 
           <Routes>
-            <Route element={<MainLayout />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<DashBoard />} />
             <Route path="/emergency" element={<Emergency />} />
