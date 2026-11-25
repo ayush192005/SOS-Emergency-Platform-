@@ -7,7 +7,7 @@ import { fileURLToPath, URL } from 'node:url'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
 
-  base: '/SOS-Emergency-Platform-/',
+  base: '/',
 
   server: {
     watch: {
