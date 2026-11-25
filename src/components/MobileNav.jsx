@@ -15,7 +15,6 @@ import { NavLink } from "react-router-dom";
 
 const MobileNav = () => {
   const [SlideLeft, SetSlideLeft] = useState(false);
-  const [IsOpen, SetIsOpen] = useState(false);
   const navbar = [
     {
       icon: LayoutDashboard,
@@ -50,7 +49,7 @@ const MobileNav = () => {
   ];
   return (
     <>
-      <nav className="md:hidden w-full bg-black sticky top-0 h-16 flex justify-between items-center px-3">
+      <nav className="md:hidden w-full z-99 bg-black sticky top-0 h-16 flex justify-between items-center px-3">
         <SiteLogo />
         <div className="flex items-center gap-3">
           <div className="block sm:hidden">
@@ -77,12 +76,12 @@ const MobileNav = () => {
       <div>
         {SlideLeft && (
           <div
-            className={`fixed top-16 right-0 bottom-0 w-72 max-w-[85vw] bg-black z-40 p-5
+            className={`fixed top-16 right-0 bottom-0 w-72 max-w-[85vw] bg-black z-9999 p-5
              transition-transform duration-300 ease-in-out
                ${SlideLeft ? "translate-x-0" : "translate-x-full"}`}
           >
             <NavLink>
-              <div className="h-full w-full bg-black flex flex-col gap-4">
+              <div className="h-full w-full z-99999 bg-black flex flex-col gap-4">
                 {navbar.map((item, idx) => {
                   const Icons = item.icon;
 
@@ -90,8 +89,8 @@ const MobileNav = () => {
                     <NavLink
                       key={idx}
                       to={item.path}
-                      onClick={() => SetIsOpen(false)}
-                      className={({ isActive }) => 
+                      onClick={() => SetSlideLeft(false)}
+                      className={({ isActive }) =>
                         `flex items-center gap-3 p-3 rounded-3xl text-white
                          ${isActive ? "bg-red-600" : "hover:bg-red-900"}`
                       }

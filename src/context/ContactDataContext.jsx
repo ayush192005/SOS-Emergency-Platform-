@@ -1,11 +1,14 @@
-import { createContext, useState } from "react";
+import {
+  createContext,
+  useState,
+  useCallback,
+  useEffect,
+  useContext,
+} from "react";
 
-// eslint-disable-next-line react-refresh/only-export-components
-export const ContactContext = createContext();
-export const ContactDataProvider = ({ children }) => {
- 
+const STORAGE_KEY = "sos-emergency-contacts";
 
-const [userContact, setUserContact] = useState([
+const INITIAL_CONTACTS = [
   {
     id: 1,
     name: "Rahul Sharma",
@@ -15,6 +18,7 @@ const [userContact, setUserContact] = useState([
     avatar: "https://i.pravatar.cc/150?img=12",
     status: "Active",
     trustLevel: "Trusted",
+    isPrimary: false,
   },
   {
     id: 2,
@@ -25,6 +29,7 @@ const [userContact, setUserContact] = useState([
     avatar: "https://i.pravatar.cc/150?img=47",
     status: "Not Active",
     trustLevel: "Trusted",
+    isPrimary: false,
   },
   {
     id: 3,
@@ -35,6 +40,7 @@ const [userContact, setUserContact] = useState([
     avatar: "https://i.pravatar.cc/150?img=13",
     status: "User Verified",
     trustLevel: "Not Trusted",
+    isPrimary: false,
   },
   {
     id: 4,
@@ -45,6 +51,7 @@ const [userContact, setUserContact] = useState([
     avatar: "https://i.pravatar.cc/150?img=44",
     status: "Active",
     trustLevel: "Trusted",
+    isPrimary: false,
   },
   {
     id: 5,
@@ -55,6 +62,7 @@ const [userContact, setUserContact] = useState([
     avatar: "https://i.pravatar.cc/150?img=14",
     status: "User Verified",
     trustLevel: "Trusted",
+    isPrimary: false,
   },
   {
     id: 6,
@@ -65,6 +73,7 @@ const [userContact, setUserContact] = useState([
     avatar: "https://i.pravatar.cc/150?img=45",
     status: "Not Active",
     trustLevel: "Not Trusted",
+    isPrimary: false,
   },
   {
     id: 7,
@@ -75,6 +84,7 @@ const [userContact, setUserContact] = useState([
     avatar: "https://i.pravatar.cc/150?img=15",
     status: "Active",
     trustLevel: "Not Trusted",
+    isPrimary: false,
   },
   {
     id: 8,
@@ -85,6 +95,7 @@ const [userContact, setUserContact] = useState([
     avatar: "https://i.pravatar.cc/150?img=48",
     status: "User Verified",
     trustLevel: "Trusted",
+    isPrimary: false,
   },
   {
     id: 9,
@@ -95,6 +106,7 @@ const [userContact, setUserContact] = useState([
     avatar: "https://i.pravatar.cc/150?img=16",
     status: "Not Active",
     trustLevel: "Not Trusted",
+    isPrimary: false,
   },
   {
     id: 10,
@@ -105,12 +117,137 @@ const [userContact, setUserContact] = useState([
     avatar: "https://i.pravatar.cc/150?img=49",
     status: "Active",
     trustLevel: "Trusted",
+    isPrimary: false,
   },
-]);
+];
+
+export const ContactContext = createContext(null);
+
+export const ContactDataProvider = ({ children }) => {
+  // Load contacts from localStorage
+  const [userContact, setUserContact] = useState(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+
+      if (stored) {
+        const parsedContacts = JSON.parse(stored);
+
+        if (Array.isArray(parsedContacts)) {
+          // Ensure only one contact can be primary
+          let primaryFound = false;
+
+          return parsedContacts.map((contact) => {
+            const isPrimary = contact.isPrimary === true && !primaryFound;
+
+            if (isPrimary) {
+              primaryFound = true;
+            }
+
+            return {
+              ...contact,
+              isPrimary,
+            };
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load contacts:", error);
+    }
+
+    return INITIAL_CONTACTS;
+  });
+
+  // Save contacts whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(userContact));
+    } catch (error) {
+      console.error("Failed to save contacts:", error);
+    }
+  }, [userContact]);
+
+  // Add a new contact
+  const addContact = useCallback((contact) => {
+    const newContact = {
+      ...contact,
+      id: Date.now(),
+      isPrimary: false,
+      status: "Active",
+      trustLevel: "Trusted",
+    };
+
+    setUserContact((prev) => [...prev, newContact]);
+
+    return newContact;
+  }, []);
+
+  // Update an existing contact
+  const updateContact = useCallback((id, updates) => {
+    setUserContact((prev) =>
+      prev.map((contact) =>
+        contact.id === id
+          ? { ...contact, ...updates, id: contact.id }
+          : contact
+      )
+    );
+  }, []);
+
+  // Delete a contact
+  const deleteContact = useCallback((id) => {
+    setUserContact((prev) =>
+      prev.filter((contact) => contact.id !== id)
+    );
+  }, []);
+
+  // Select primary contact
+  const setPrimaryContact = useCallback((id) => {
+    setUserContact((prev) =>
+      prev.map((contact) => ({
+        ...contact,
+        isPrimary: contact.id === id,
+      }))
+    );
+  }, []);
+
+  // Get primary contact
+  const getPrimaryContact = useCallback(() => {
+    return userContact.find((contact) => contact.isPrimary === true) || null;
+  }, [userContact]);
+
+  // Get trusted contacts
+  const getTrustedContacts = useCallback(() => {
+    return userContact.filter(
+      (contact) => contact.trustLevel === "Trusted"
+    );
+  }, [userContact]);
 
   return (
-    <ContactContext.Provider value={{ userContact, setUserContact }}>
+    <ContactContext.Provider
+      value={{
+        userContact,
+        setUserContact,
+        addContact,
+        updateContact,
+        deleteContact,
+        setPrimaryContact,
+        getPrimaryContact,
+        getTrustedContacts,
+      }}
+    >
       {children}
     </ContactContext.Provider>
   );
 };
+
+// Custom hook
+export function useContacts() {
+  const context = useContext(ContactContext);
+
+  if (!context) {
+    throw new Error(
+      "useContacts must be used within a ContactDataProvider"
+    );
+  }
+
+  return context;
+}
