@@ -33,6 +33,28 @@ const App = () => {
 
   const isNotFound = !validRoutes.includes(location.pathname);
 
+  // Temporary backend connection test
+  const testBackend = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/test", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: "Ayush",
+          message: "Hello from React",
+        }),
+      });
+
+      const data = await response.json();
+
+      console.log("Backend Response:", data);
+    } catch (error) {
+      console.error("Backend connection failed:", error);
+    }
+  };
+
   return (
     <ContactDataProvider>
       <AlertProvider>
@@ -51,40 +73,19 @@ const App = () => {
                       element={<Navigate to="/dashboard" replace />}
                     />
 
-                    <Route
-                      path="/dashboard"
-                      element={<DashBoard />}
-                    />
+                    <Route path="/dashboard" element={<DashBoard />} />
 
-                    <Route
-                      path="/emergency"
-                      element={<Emergency />}
-                    />
+                    <Route path="/emergency" element={<Emergency />} />
 
-                    <Route
-                      path="/location"
-                      element={<Location />}
-                    />
+                    <Route path="/location" element={<Location />} />
 
-                    <Route
-                      path="/contact"
-                      element={<Contact />}
-                    />
+                    <Route path="/contact" element={<Contact />} />
 
-                    <Route
-                      path="/profile"
-                      element={<Profile />}
-                    />
+                    <Route path="/profile" element={<Profile />} />
 
-                    <Route
-                      path="/settings"
-                      element={<Settings />}
-                    />
+                    <Route path="/settings" element={<Settings />} />
 
-                    <Route
-                      path="*"
-                      element={<NotFoundPage />}
-                    />
+                    <Route path="*" element={<NotFoundPage />} />
                   </Routes>
                 </div>
               </div>
@@ -95,4 +96,5 @@ const App = () => {
     </ContactDataProvider>
   );
 };
+
 export default App;

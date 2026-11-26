@@ -20,14 +20,35 @@ export const SOSProvider = ({ children }) => {
   const pressTimerRef = useRef(null);
   const isSendingRef = useRef(false);
 
-  // Send emergency SMS through backend
+  // Send emergency SMS through Express + TextBee
   const triggerSOS = useCallback(async (contacts, location) => {
     if (isSendingRef.current) return;
 
     const primaryContact = contacts?.[0];
 
+    // Validate primary contact
     if (!primaryContact) {
       setSosError("No primary emergency contact selected.");
+      setIsActive(false);
+      return;
+    }
+
+    // Validate phone number
+    const phone = primaryContact.phone?.replace(/\s+/g, "");
+
+    if (!phone) {
+      setSosError("Primary contact phone number is missing.");
+      setIsActive(false);
+      return;
+    }
+
+    // Validate location
+    if (
+      !Array.isArray(location) ||
+      location.length !== 2 ||
+      !location.every(Number.isFinite)
+    ) {
+      setSosError("Unable to get a valid location.");
       setIsActive(false);
       return;
     }
@@ -39,6 +60,19 @@ export const SOSProvider = ({ children }) => {
     setLastTriggered(null);
 
     try {
+      const [latitude, longitude] = location;
+
+      const mapLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
+
+      const message = `SOS EMERGENCY ALERT!
+
+${primaryContact.name} needs immediate help.
+
+My current location:
+${mapLink}
+
+Please contact me immediately.`;
+
       const response = await fetch(
         "http://localhost:5000/api/send-sms",
         {
@@ -47,17 +81,14 @@ export const SOSProvider = ({ children }) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            name: primaryContact.name,
-            phone: primaryContact.phone,
-            location: {
-              latitude: location[0],
-              longitude: location[1],
-            },
+            to: phone,
+            message,
           }),
         }
       );
 
-      const result = await response.json();
+      // Safely parse backend response
+      const result = await response.json().catch(() => ({}));
 
       if (!response.ok || !result.success) {
         throw new Error(
@@ -65,6 +96,7 @@ export const SOSProvider = ({ children }) => {
         );
       }
 
+      // TextBee accepted the SMS request
       setLastTriggered({
         success: true,
         contactsNotified: 1,
@@ -73,14 +105,19 @@ export const SOSProvider = ({ children }) => {
       });
 
       return result;
+
     } catch (error) {
       console.error("SOS failed:", error);
-      setSosError(error.message || "Unable to send emergency SMS.");
+
+      setSosError(
+        error.message || "Unable to send emergency SMS."
+      );
 
       return {
         success: false,
         error: error.message,
       };
+
     } finally {
       isSendingRef.current = false;
       setIsSending(false);
@@ -99,6 +136,7 @@ export const SOSProvider = ({ children }) => {
       pressTimerRef.current = null;
       triggerSOS(contacts, location);
     }, HOLD_DURATION);
+
   }, [triggerSOS]);
 
   // Cancel if user releases before 2 seconds
@@ -112,6 +150,11 @@ export const SOSProvider = ({ children }) => {
 
   // Reset SOS status
   const resetSOS = useCallback(() => {
+    if (pressTimerRef.current) {
+      clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+
     setIsActive(false);
     setLastTriggered(null);
     setSosError(null);
@@ -136,11 +179,14 @@ export const SOSProvider = ({ children }) => {
   );
 };
 
+// Custom hook
 export function useSOS() {
   const context = useContext(SOSContext);
 
   if (!context) {
-    throw new Error("useSOS must be used within an SOSProvider");
+    throw new Error(
+      "useSOS must be used within an SOSProvider"
+    );
   }
 
   return context;

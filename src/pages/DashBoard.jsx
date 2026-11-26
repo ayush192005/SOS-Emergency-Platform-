@@ -113,7 +113,7 @@ const DashBoard = () => {
           </div>
           {/* 3 contact list */}
           <div className="flex cursor-pointer flex-col py-2 max-h-96 overflow-y-auto">
-            {userContact.slice(0, 5).map((item) => (
+            {userContact.slice(0, 20).map((item) => (
               <div
                 key={item.id}
                 className="bg-white border-b-2 border-gray-300 p-2 flex flex-wrap justify-between hover:bg-gray-200 items-center"

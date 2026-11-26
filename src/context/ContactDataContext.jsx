@@ -11,14 +11,14 @@ const STORAGE_KEY = "sos-emergency-contacts";
 const INITIAL_CONTACTS = [
   {
     id: 1,
-    name: "Rahul Sharma",
-    phone: "+91 9876543210",
+    name: "Raj Sharma",
+    phone: "+91 9350174079",
     email: "rahul.sharma@gmail.com",
     relationship: "Brother",
     avatar: "https://i.pravatar.cc/150?img=12",
     status: "Active",
     trustLevel: "Trusted",
-    isPrimary: false,
+    isPrimary: true,
   },
   {
     id: 2,
@@ -125,37 +125,46 @@ export const ContactContext = createContext(null);
 
 export const ContactDataProvider = ({ children }) => {
   // Load contacts from localStorage
-  const [userContact, setUserContact] = useState(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
 
-      if (stored) {
-        const parsedContacts = JSON.parse(stored);
+const [userContact, setUserContact] = useState(() => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
 
-        if (Array.isArray(parsedContacts)) {
-          // Ensure only one contact can be primary
-          let primaryFound = false;
+    if (stored) {
+      const parsedContacts = JSON.parse(stored);
 
-          return parsedContacts.map((contact) => {
-            const isPrimary = contact.isPrimary === true && !primaryFound;
+      if (Array.isArray(parsedContacts) && parsedContacts.length > 0) {
+        let primaryFound = false;
 
-            if (isPrimary) {
-              primaryFound = true;
-            }
+        const contacts = parsedContacts.map((contact) => {
+          const isPrimary =
+            contact.isPrimary === true && !primaryFound;
 
-            return {
-              ...contact,
-              isPrimary,
-            };
-          });
+          if (isPrimary) {
+            primaryFound = true;
+          }
+
+          return {
+            ...contact,
+            isPrimary,
+          };
+        });
+
+        // If no primary contact exists, select the first one
+        if (!primaryFound) {
+          contacts[0].isPrimary = true;
         }
-      }
-    } catch (error) {
-      console.error("Failed to load contacts:", error);
-    }
 
-    return INITIAL_CONTACTS;
-  });
+        return contacts;
+      }
+    }
+  } catch (error) {
+    console.error("Failed to load contacts:", error);
+  }
+
+  return INITIAL_CONTACTS;
+});
+
 
   // Save contacts whenever they change
   useEffect(() => {

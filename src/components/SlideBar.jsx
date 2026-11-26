@@ -1,11 +1,26 @@
+
 import { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import SiteLogo from "../components/SiteLogo";
-import { NavLink } from "react-router-dom";
-import {Search, LayoutDashboard, MapPin,  Siren, Contact, User,  Settings} from "lucide-react";
-import { PanelLeftClose } from "lucide-react";
-import { PanelLeftOpen } from "lucide-react";
+
+import {
+  Search,
+  LayoutDashboard,
+  MapPin,
+  Siren,
+  Contact,
+  User,
+  Settings,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from "lucide-react";
 
 const SlideBar = () => {
+  const [IsOpen, SetIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const navigate = useNavigate();
+
   const navbar = [
     {
       icon: LayoutDashboard,
@@ -39,7 +54,16 @@ const SlideBar = () => {
     },
   ];
 
-  const [IsOpen, SetIsOpen] = useState(false);
+  // Filter navigation pages based on search input
+  const filteredNavbar = navbar.filter((item) =>
+    item.icons_name.toLowerCase().includes(search.trim().toLowerCase())
+  );
+
+  // Navigate to selected search result
+  const handleSearchResult = (path) => {
+    navigate(path);
+    setSearch("");
+  };
 
   return (
     <div
@@ -47,13 +71,17 @@ const SlideBar = () => {
       flex-col justify-between transition-all duration-300
       ${IsOpen ? "w-60" : "w-20"}`}
     >
-      {/* Logo + Search Bar + Menu Bars */}
+      {/* Logo + Search Bar + Menu */}
       <div className="flex flex-col gap-3">
+
         {/* Logo */}
         <div
-          className={`flex p-3 items-center gap-6 ${IsOpen ? "justify-start" : "justify-center"}`}
+          className={`flex p-3 items-center gap-6 ${
+            IsOpen ? "justify-start" : "justify-center"
+          }`}
         >
           <SiteLogo />
+
           {IsOpen && (
             <span className="text-white text-xl font-bold whitespace-nowrap">
               SafeGuard
@@ -62,51 +90,89 @@ const SlideBar = () => {
         </div>
 
         {/* Search Bar */}
-        <div className="flex w-full">
+        <div className="relative flex flex-col w-full">
           <div
-            className={`flex items-center gap-4 p-2 rounded-3xl transition-all duration-300
-       ${IsOpen ? "bg-zinc-800 w-full" : "justify-center w-full"}`}
+            className={`flex items-center gap-3 p-2 rounded-3xl transition-all duration-300
+            ${
+              IsOpen
+                ? "bg-zinc-800 w-full"
+                : "justify-center w-full"
+            }`}
           >
             <Search
               strokeWidth={1.5}
               size={22}
               className="text-white shrink-0"
             />
+
             {IsOpen && (
               <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search Here..."
-                className="text-white outline-none whitespace-nowrap text-sm"
-              ></input>
+                className="text-white bg-transparent outline-none text-sm w-full min-w-0"
+              />
             )}
           </div>
+
+          {/* Search Results */}
+          {IsOpen && search.trim() !== "" && (
+            <div className="absolute top-full left-0 w-full mt-2 z-50 bg-zinc-900 border border-zinc-700 rounded-xl p-2 shadow-lg">
+
+              {filteredNavbar.length > 0 ? (
+                filteredNavbar.map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <button
+                      key={item.path}
+                      type="button"
+                      onClick={() => handleSearchResult(item.path)}
+                      className="flex items-center gap-3 w-full p-2 text-white hover:bg-red-900 rounded-lg text-sm transition-colors"
+                    >
+                      <Icon size={18} />
+                      <span>{item.icons_name}</span>
+                    </button>
+                  );
+                })
+              ) : (
+                <p className="text-gray-400 text-sm p-2">
+                  No results found
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Main Menu */}
-        <div className=" flex flex-col gap-2 ">
+        <div className="flex flex-col gap-2">
+
           {IsOpen && (
             <span className="text-[#7F8487] text-sm whitespace-nowrap">
               Main Menu
             </span>
           )}
 
-          {navbar.map((item, idx) => {
-            const Icons = item.icon;
+          {navbar.map((item) => {
+            const Icon = item.icon;
 
             return (
               <NavLink
-                key={idx}
+                key={item.path}
                 to={item.path}
-                className={({isActive}) =>
+                className={({ isActive }) =>
                   `w-full flex gap-3 p-2 items-center hover:to-blue-300 transition-all duration-200 rounded-3xl
                   ${IsOpen ? "justify-start" : "justify-center"}
-                  ${isActive ? "bg-red-500 " : "hover:bg-red-900"}`
+                  ${isActive ? "bg-red-500" : "hover:bg-red-900"}`
                 }
               >
-                <Icons
+                <Icon
                   strokeWidth={2}
                   size={22}
                   className="text-white shrink-0"
                 />
+
                 {IsOpen && (
                   <span className="text-white whitespace-nowrap">
                     {item.icons_name}
@@ -118,11 +184,20 @@ const SlideBar = () => {
         </div>
       </div>
 
-      {/* Toogle */}
+      {/* Toggle Sidebar */}
       <div
-        className={`flex justify-center p-3 ${IsOpen ? "justify-start" : "justify-center"}`}
+        className={`flex p-3 ${
+          IsOpen ? "justify-start" : "justify-center"
+        }`}
       >
-        <button onClick={() => SetIsOpen(!IsOpen)}>
+        <button
+          type="button"
+          onClick={() => {
+            SetIsOpen(!IsOpen);
+            setSearch("");
+          }}
+          aria-label={IsOpen ? "Collapse sidebar" : "Expand sidebar"}
+        >
           {IsOpen ? (
             <PanelLeftClose className="text-white" size={20} />
           ) : (
